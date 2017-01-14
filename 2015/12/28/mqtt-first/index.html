@@ -1,0 +1,223 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>基于mqtt的消息推送（一）技术选型 | targe&#39;s blog</title>
+  <meta name="author" content="targe">
+  
+  <meta name="description" content="targe的技术博客">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="基于mqtt的消息推送（一）技术选型"/>
+  <meta property="og:site_name" content="targe&#39;s blog"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="targe&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" type="text/css">
+<link rel="stylesheet" href="/css/style.css" type="text/css">
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+</head>
+
+<body>
+  <header id="header" class='normal_mode'>
+    <nav id="main-nav">
+  <ul class='container'>
+    
+      <li><a href="/">Home</a></li>
+    
+      <li><a href="/archives">Archives</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+  </header>
+  <div id="content" class="container">
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+      <time datetime="2015-12-28T02:18:19.000Z"><a href="/2015/12/28/mqtt-first/">Mon, Dec 28 2015, 10:18:19 am</a></time>
+
+  
+    <h1 class="title">基于mqtt的消息推送（一）技术选型</h1>
+  
+
+
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <h2 id="u80CC_u666F"><a href="#u80CC_u666F" class="headerlink" title="背景"></a>背景</h2><p>项目架构原来是App通过soap传输数据，由于部分数据是动态变化的，所以需要定时轮询是否有新的数据。由于更新的数据本身大小不是很大，考虑使用消息推送的方式来更新数据。<br><a id="more"></a> </p>
+<h2 id="u6280_u672F_u9009_u578B"><a href="#u6280_u672F_u9009_u578B" class="headerlink" title="技术选型"></a>技术选型</h2><p>mq可以供选择的方案很多，选型的标准为可以在移动端快速使用，跨平台（App现在有Android和IOS两个版本），可以在复杂网络环境使用。mqtt完全满足上面的需求，首先mqtt是由IBM牵头制定，设计目标是帮助嵌入式设备快速稳定的进行数据传输，协议本身是开源的，基于tcp协议构建。并且有大量的开源服务端和客户端实现，现在的mqtt属于eclipse基金会。在mqtt的github页面有相关的实现连接，链接： <a href="https://github.com/mqtt/mqtt.github.io/wiki/software?id=software" target="_blank" rel="external">https://github.com/mqtt/mqtt.github.io/wiki/software?id=software</a></p>
+<h4 id="u670D_u52A1_u7AEF_u9009_u578B"><a href="#u670D_u52A1_u7AEF_u9009_u578B" class="headerlink" title="服务端选型"></a>服务端选型</h4><p>服务端可供选择的实现：<a href="https://github.com/mqtt/mqtt.github.io/wiki/servers" target="_blank" rel="external">https://github.com/mqtt/mqtt.github.io/wiki/servers</a></p>
+<p>简单说一下各个实现的优势和劣势（只说明了试用过的，其它的请自行测试）：</p>
+<p>1.WebsphereMQ</p>
+<p>mqtt协议本身是由IBM提出的，不过WebsphereMQ对于一般用户来说体量太大了，上手难度太大</p>
+<p>2.Mosquitto</p>
+<p>官方网站：<a href="http://mosquitto.org/" target="_blank" rel="external">http://mosquitto.org/</a> 支持的协议类型MQTT v3.1/v3.1.1。Mosquitto本身在BSD协议下开源，可以在官网下载源代码，方便自己定制，不过Mosquitto由c实现，上手难度比较大。另外Mosquitto提供了libmosquitto供客户端使用。</p>
+<p>3.Eclipse Paho</p>
+<p>官方网站：<a href="http://www.eclipse.org/paho/" target="_blank" rel="external">http://www.eclipse.org/paho/</a>，归属于eclipse基金会，提供了一个公开的mosquitto实现，地址：iot.eclipse.org, 端口 1883。主要提供了大量的客户端实现类库（本项目Andoird客户端使用了<a href="https://www.eclipse.org/paho/clients/android/" target="_blank" rel="external">https://www.eclipse.org/paho/clients/android/</a>）</p>
+<p>4.emqtt</p>
+<p>官方网站：<a href="http://emqtt.cn/" target="_blank" rel="external">http://emqtt.cn/</a>，国内大神开发的服务端，非常强悍。基于erlang开发，本身在MIT协议下开源，项目托管在<a href="https://github.com/emqtt/emqttd" target="_blank" rel="external">https://github.com/emqtt/emqttd</a>，协议支持到MQTT V3.1.1，支持基于HTTP Publish API and WebSocket的访问，支持集群部署，支持插件式开发。截取作者性能测试说明如下：<br><img src="http://7xpkfb.com1.z0.glb.clouddn.com/emqtt.png" alt="性能测试"><br>erlang对于普通用户来说还是难上手，如果没有定制开发的需求可以考虑使用。另外作者提供了客户端类库，包括用swift构建的IOS客户端。</p>
+<p>5.Yunba.io</p>
+<p>官方网站：<a href="http://yunba.io/" target="_blank" rel="external">http://yunba.io/</a>，原极光推送的CTO张虎创建的商用平台，erlang开发，支持HTTP Publish API and WebSocket，使用了下，效果还不错，IOS的sdk对接非常简单，另外提供了各个平台的sdk，大部分是基于现有的开源类库实现的。免费用户有一定的限制，如果需要商业支持是个不错的选择。</p>
+<p>6.Mosca</p>
+<p>基于node.js开发的服务端实现，项目托管在<a href="https://github.com/mcollina/mosca" target="_blank" rel="external">https://github.com/mcollina/mosca</a>，同时支持WebSocket访问，本身在MIT协议下开源。数据持久化支持redis和mongo，部署支持docker。二次开发非常简单，这也是最后项目选定的一个主要因素。另附某博客的对mosca说明的技术文章<a href="http://blog.shiqichan.com/introducing-mqtt/" target="_blank" rel="external">http://blog.shiqichan.com/introducing-mqtt/</a>，我在开发过程中多有参考，在此表示感谢。</p>
+<h3 id="u5199_u5728_u6700_u540E"><a href="#u5199_u5728_u6700_u540E" class="headerlink" title="写在最后"></a>写在最后</h3><p>其实技术选型很重要的一个原则是要选择适合自己的方案，而不是最好的方案。下篇文章会介绍在使用Mosca进行二次开发遇到的那些坑，敬请期待！</p>
+
+      
+    </div>
+    <footer>
+      
+          
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <span class="jiathis_txt">分享到：</span>
+  <a class="jiathis_button_weixin">微信</a>
+  <a class="jiathis_button_tsina">新浪微博</a>
+  <a class="jiathis_button_renren">人人网</a>
+  <a class="jiathis_button_qzone">QQ空间</a>
+  <a class="jiathis_button_douban">豆瓣</a>
+  <a class="jiathis_button_pocket">Pocket</a>
+  <a href="http://www.jiathis.com/share?uid=901656" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" src="http://v3.jiathis.com/code_mini/jia.js?uid=901656" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+          <div class="clearfix"></div>
+          <nav id="pagination">
+  
+    <a href="/2015/12/29/mqtt-second/" class="alignleft prev"><i class="fa fa-long-arrow-left"></i>Next</a>
+  
+  
+  <div class="clearfix"></div>
+</nav>
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+  <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+  
+</section>
+
+
+
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div>
+  
+  &copy; 2017 targe
+  
+</div>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="external">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="external">GitHub Pages</a>
+
+<div class="clearfix"></div></footer>
+  
+<script src="/js/jquery.imagesloaded.min.js" type="text/javascript"></script>
+<script src="/js/gallery.js" type="text/javascript"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+var disqus_shortname = 'targesblog';
+
+(function(){
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript';
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+}());
+</script>
+
+
+
+    <script type="text/javascript">
+        (function(){
+
+            $(window).scroll(function(){
+
+                var scrollTop = $(window).scrollTop();
+                if ( scrollTop >200 ){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+                } else{
+                    $("#main-nav").removeClass('top_mode').addClass('normal_mode');
+                }
+
+            });
+
+        })();
+    </script>
+
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript">
+  (function($){
+    $('.fancybox').fancybox({
+      'titlePosition': 'inside'
+    });
+  })(jQuery);
+  </script>
+
+
+
+
+<script type="text/javascript">
+  
+  $(function(){
+
+    $('.title').hover(
+      function() {      
+        $(this).stop().animate(
+          {'marginLeft': '10px'}, 200
+        );   
+      }, 
+      function() {       
+        $(this).stop().animate({'marginLeft': '0px'}, 200);      
+      
+    });   
+
+  });
+
+</script>
+
+
+</body>
+</html>

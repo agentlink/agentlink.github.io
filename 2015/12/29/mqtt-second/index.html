@@ -1,0 +1,245 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>基于mqtt的消息推送（二）服务端实现 | targe&#39;s blog</title>
+  <meta name="author" content="targe">
+  
+  <meta name="description" content="targe的技术博客">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="基于mqtt的消息推送（二）服务端实现"/>
+  <meta property="og:site_name" content="targe&#39;s blog"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="targe&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" type="text/css">
+<link rel="stylesheet" href="/css/style.css" type="text/css">
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+</head>
+
+<body>
+  <header id="header" class='normal_mode'>
+    <nav id="main-nav">
+  <ul class='container'>
+    
+      <li><a href="/">Home</a></li>
+    
+      <li><a href="/archives">Archives</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+  </header>
+  <div id="content" class="container">
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+      <time datetime="2015-12-29T02:41:16.000Z"><a href="/2015/12/29/mqtt-second/">Tue, Dec 29 2015, 10:41:16 am</a></time>
+
+  
+    <h1 class="title">基于mqtt的消息推送（二）服务端实现</h1>
+  
+
+
+
+<div class="clear"></div>
+      
+    </header>
+    <div class="entry">
+      
+        <h2 id="u57FA_u4E8EMosca_u7684_u670D_u52A1_u7AEF_u5B9E_u73B0"><a href="#u57FA_u4E8EMosca_u7684_u670D_u52A1_u7AEF_u5B9E_u73B0" class="headerlink" title="基于Mosca的服务端实现"></a>基于Mosca的服务端实现</h2><p>Mosca简介，Mosca基于node.js开发，特性引用自项目首页介绍如下：</p>
+<h3 id="Features"><a href="#Features" class="headerlink" title="Features"></a>Features</h3><ul>
+<li>MQTT 3.1 and 3.1.1 compliant.</li>
+<li>QoS 0 and QoS 1.</li>
+<li>Various storage options for QoS 1 offline packets, and subscriptions.</li>
+<li>As fast as it is possible.</li>
+<li>Usable inside ANY other Node.js app.</li>
+<li>Supports Node.js v0.10 and v0.12.</li>
+<li>Supports io.js v1.x and v2.x and v3.x (please do not use v3.1.0)</li>
+</ul>
+<a id="more"></a> 
+<p>需要特别说明的是Mosca并不支持Qos 2。</p>
+<p>为什么选择Mosca？首先基于node.js开发，上手难度相对较小，其次协议支持完整，除了不支持Qos 2，其它的基本都支持。持久化支持redis以及mongo。二次开发接口简单。部署非常简单，并且支持docker镜像。</p>
+<h2 id="u5F00_u53D1_u6B65_u9AA4"><a href="#u5F00_u53D1_u6B65_u9AA4" class="headerlink" title="开发步骤"></a>开发步骤</h2><h3 id="u5B89_u88C5Mosca"><a href="#u5B89_u88C5Mosca" class="headerlink" title="安装Mosca"></a>安装Mosca</h3><p>本文环境假设你已经安装了node.js环境以及redis，我本机的环境如下：mac ox 10.11.2 node.js v0.12 redis最新版本。</p>
+<p>Mosca项目托管地址：<a href="https://github.com/mcollina/mosca" target="_blank" rel="external">https://github.com/mcollina/mosca</a><br>官方wiki：<a href="https://github.com/mcollina/mosca/wiki" target="_blank" rel="external">https://github.com/mcollina/mosca/wiki</a></p>
+<p>安装非常简单，源引自官方说明如下：</p>
+<h4 id="Standalone"><a href="#Standalone" class="headerlink" title="Standalone"></a>Standalone</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm install mosca bunyan -g</span><br><span class="line">mosca -v | bunyan</span><br></pre></td></tr></table></figure>
+<h4 id="Embedded"><a href="#Embedded" class="headerlink" title="Embedded"></a>Embedded</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install mosca --save</span><br></pre></td></tr></table></figure>
+<h3 id="u542F_u52A8_u811A_u672C"><a href="#u542F_u52A8_u811A_u672C" class="headerlink" title="启动脚本"></a>启动脚本</h3><p>官方给了一个简单的例子，如下是我现在使用的测试代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> mosca = <span class="built_in">require</span>(<span class="string">'mosca'</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">//ascoltatore是Mosca作者开发的一个订阅与发布类库，Mosca核心的订阅与发布模型</span></span><br><span class="line"><span class="keyword">var</span> ascoltatore = &#123;</span><br><span class="line">  type: <span class="string">'redis'</span>,  <span class="comment">//指定类型，mongo的写法请参考官方wiki</span></span><br><span class="line">  redis: <span class="built_in">require</span>(<span class="string">'redis'</span>),</span><br><span class="line">  db: <span class="number">1</span>,  </span><br><span class="line">  port: <span class="number">6379</span>,</span><br><span class="line">  return_buffers: <span class="literal">true</span>, <span class="comment">// to handle binary payloads</span></span><br><span class="line">  <span class="comment">//指定数据保留多长时间，单位毫秒</span></span><br><span class="line">  ttl: &#123;</span><br><span class="line">    <span class="comment">// TTL for subscriptions is 23 hour</span></span><br><span class="line">    subscriptions: <span class="number">23</span> * <span class="number">60</span> * <span class="number">60</span> * <span class="number">1000</span>,</span><br><span class="line">    <span class="comment">// TTL for packets is 23 hour</span></span><br><span class="line">    packets: <span class="number">23</span> * <span class="number">60</span> * <span class="number">60</span> * <span class="number">1000</span>,</span><br><span class="line">  &#125;,</span><br><span class="line">  host: <span class="string">"localhost"</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//基本参数设置</span></span><br><span class="line"><span class="keyword">var</span> moscaSettings = &#123;</span><br><span class="line">  port: <span class="number">1883</span>, <span class="comment">//设置监听端口</span></span><br><span class="line">  backend: ascoltatore,</span><br><span class="line">  maxInflightMessages: <span class="number">10240</span>, <span class="comment">//设置单条消息的最大长度，超出后服务端会返回</span></span><br><span class="line">  <span class="comment">//设置WebSocket参数</span></span><br><span class="line">  http: &#123;</span><br><span class="line">    port: <span class="number">1884</span>,</span><br><span class="line">    bundle: <span class="literal">true</span>,</span><br><span class="line">    static: <span class="string">'./'</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="comment">//数据持久化参数设置</span></span><br><span class="line">  persistence: &#123;</span><br><span class="line">    factory: mosca.persistence.Redis,</span><br><span class="line">    db: <span class="number">1</span>,</span><br><span class="line">    port: <span class="number">6379</span>,</span><br><span class="line">    return_buffers: <span class="literal">true</span>, <span class="comment">// to handle binary payloads</span></span><br><span class="line">    ttl: &#123;</span><br><span class="line">      <span class="comment">// TTL for subscriptions is 23 hour</span></span><br><span class="line">      subscriptions: <span class="number">23</span> * <span class="number">60</span> * <span class="number">60</span> * <span class="number">1000</span>,</span><br><span class="line">      <span class="comment">// TTL for packets is 23 hour</span></span><br><span class="line">      packets: <span class="number">23</span> * <span class="number">60</span> * <span class="number">60</span> * <span class="number">1000</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">    host: <span class="string">"localhost"</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//如果需要用户登录验证权限，需要改写此方法</span></span><br><span class="line"><span class="comment">//这里以简单判断了用户名和密码为例，真实环境可以连接实际业务系统的鉴权服务</span></span><br><span class="line"><span class="keyword">var</span> authenticate = <span class="function"><span class="keyword">function</span>(<span class="params">client, username, password, callback</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> authorized = (username === <span class="string">'test'</span> &amp;&amp; password.toString() === <span class="string">'passwd'</span>);</span><br><span class="line">  <span class="keyword">if</span> (authorized) client.user = username;</span><br><span class="line">  callback(<span class="literal">null</span>, authorized);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">authPub</span>(<span class="params">client, topic, payload, callback</span>) </span>&#123;</span><br><span class="line">  callback(<span class="literal">null</span>, payload);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">authSub</span>(<span class="params">client, topic, callback</span>) </span>&#123;</span><br><span class="line">  callback(<span class="literal">null</span>, topic);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> server = <span class="keyword">new</span> mosca.Server(moscaSettings);</span><br><span class="line">server.on(<span class="string">'ready'</span>, setup);</span><br><span class="line"></span><br><span class="line">server.on(<span class="string">'clientConnected'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">client</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'client connected'</span>, client.id);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">server.on(<span class="string">'published'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">packet, client</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'Published'</span>, packet.topic + packet.payload);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// fired when the mqtt server is ready</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setup</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  server.authenticate = authenticate;</span><br><span class="line">  server.authorizePublish = authPub;</span><br><span class="line">  server.authorizeSubscribe = authSub;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'Mosca server is up and running'</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="u4E8C_u6B21_u5F00_u53D1"><a href="#u4E8C_u6B21_u5F00_u53D1" class="headerlink" title="二次开发"></a>二次开发</h3><p>可以监听的事件列表</p>
+<ul>
+<li><code>clientConnected</code> : when a client is connected; the client is passed as a<br>parameter.</li>
+<li><code>clientDisconnecting</code> : when a client is being disconnected; the client is<br>passed as a parameter.</li>
+<li><code>clientDisconnected</code> : when a client is disconnected; the client is passed as<br>a parameter.</li>
+<li><code>published</code> : when a new message is published; the packet and the client are<br>passed as parameters.</li>
+<li><code>delivered</code> : when a client has sent back a puback for a published message; the packet and the client are<br>passed as parameters.</li>
+<li><code>subscribed</code> : when a client is subscribed to a topic; the topic and the<br>client are passed as parameters.</li>
+<li><code>unsubscribed</code> : when a client is unsubscribed to a topic; the topic and the<br>client are passed as parameters.</li>
+</ul>
+<p>有了上面可以监听到事件你就可以根据自己的业务进行相应的开发，拦截特定的事件并添加业务代码</p>
+<p>ascoltatore托管地址 <a href="https://github.com/mcollina/ascoltatori" target="_blank" rel="external">https://github.com/mcollina/ascoltatori</a></p>
+<p>高级参数设置可以参考 <a href="https://github.com/mcollina/mosca/wiki/Mosca-advanced-usage" target="_blank" rel="external">https://github.com/mcollina/mosca/wiki/Mosca-advanced-usage</a></p>
+<p>权限验证可以参考 <a href="https://github.com/mcollina/mosca/wiki/Authentication-&amp;-Authorization" target="_blank" rel="external">https://github.com/mcollina/mosca/wiki/Authentication-&amp;-Authorization</a></p>
+<p>配置ssl可以参考 <a href="https://github.com/mcollina/mosca/wiki/TLS-SSL-Configuration" target="_blank" rel="external">https://github.com/mcollina/mosca/wiki/TLS-SSL-Configuration</a></p>
+<p>配置WebSocket可以参考 <a href="https://github.com/mcollina/mosca/wiki/MQTT-over-Websockets" target="_blank" rel="external">https://github.com/mcollina/mosca/wiki/MQTT-over-Websockets</a></p>
+<h3 id="u5199_u5728_u6700_u540E"><a href="#u5199_u5728_u6700_u540E" class="headerlink" title="写在最后"></a>写在最后</h3><p>感谢Mosca的作者mcollina，Mosca非常强大，并且足够简单。下篇文章会介绍如何利用IOS和Android开源客户端类库与Mosca对接，敬请期待！</p>
+
+      
+    </div>
+    <footer>
+      
+          
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <span class="jiathis_txt">分享到：</span>
+  <a class="jiathis_button_weixin">微信</a>
+  <a class="jiathis_button_tsina">新浪微博</a>
+  <a class="jiathis_button_renren">人人网</a>
+  <a class="jiathis_button_qzone">QQ空间</a>
+  <a class="jiathis_button_douban">豆瓣</a>
+  <a class="jiathis_button_pocket">Pocket</a>
+  <a href="http://www.jiathis.com/share?uid=901656" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" src="http://v3.jiathis.com/code_mini/jia.js?uid=901656" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+          <div class="clearfix"></div>
+          <nav id="pagination">
+  
+    <a href="/2016/01/02/mqtt-three/" class="alignleft prev"><i class="fa fa-long-arrow-left"></i>Next</a>
+  
+  
+    <a href="/2015/12/28/mqtt-first/" class="alignright next">Prev<i class="fa fa-long-arrow-right"></i></a>
+  
+  <div class="clearfix"></div>
+</nav>
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+  <div id="disqus_thread">
+    <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </div>
+  
+</section>
+
+
+
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div>
+  
+  &copy; 2017 targe
+  
+</div>
+Powered by <a href="http://zespia.tw/hexo/" title="Hexo" target="_blank" rel="external">Hexo</a> and <a href="http://pages.github.com/" title="GitHub Pages" target="_blank" rel="external">GitHub Pages</a>
+
+<div class="clearfix"></div></footer>
+  
+<script src="/js/jquery.imagesloaded.min.js" type="text/javascript"></script>
+<script src="/js/gallery.js" type="text/javascript"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+var disqus_shortname = 'targesblog';
+
+(function(){
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript';
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+}());
+</script>
+
+
+
+    <script type="text/javascript">
+        (function(){
+
+            $(window).scroll(function(){
+
+                var scrollTop = $(window).scrollTop();
+                if ( scrollTop >200 ){
+                    $("#main-nav").removeClass('normal_mode').addClass('top_mode');
+                } else{
+                    $("#main-nav").removeClass('top_mode').addClass('normal_mode');
+                }
+
+            });
+
+        })();
+    </script>
+
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript">
+  (function($){
+    $('.fancybox').fancybox({
+      'titlePosition': 'inside'
+    });
+  })(jQuery);
+  </script>
+
+
+
+
+<script type="text/javascript">
+  
+  $(function(){
+
+    $('.title').hover(
+      function() {      
+        $(this).stop().animate(
+          {'marginLeft': '10px'}, 200
+        );   
+      }, 
+      function() {       
+        $(this).stop().animate({'marginLeft': '0px'}, 200);      
+      
+    });   
+
+  });
+
+</script>
+
+
+</body>
+</html>
