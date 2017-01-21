@@ -73,7 +73,7 @@
     <div class="entry">
       
         <h2 id="u80CC_u666F"><a href="#u80CC_u666F" class="headerlink" title="背景"></a>背景</h2><p>在现有的RFID人员热力追踪系统中关于硬件读卡器的配置和调试一直有难以使用的问题，原来的操作步骤是用笔记本通过usb串口连接，然后进行参数的调整和天线角度和功率的调试，在实际的现场环境中操作非常不便，所以才有了这次的解决方案。大致的方案是读卡器通过usb串口连接到树莓派3，然后手机通过WiFi连接到树莓派3，通过手机App下发指令给树莓派中转到读卡器，而且树莓派可以直接用充电宝供电，方便携带和安装，手机App可以方便灵活的调试天线的发射功率和角度。<br><a id="more"></a> </p>
-<h2 id="u5F00_u53D1_u5DE5_u5177"><a href="#u5F00_u53D1_u5DE5_u5177" class="headerlink" title="开发工具"></a>开发工具</h2><p>Mono + Xcode，Mono用来调用厂家提供的sdk，本来准备重写通信协议，但厂家给的sdk本身就是平台无关，所以直接拿来用了。Xcode用来编写上位机App。</p>
+<h2 id="u5F00_u53D1_u5DE5_u5177"><a href="#u5F00_u53D1_u5DE5_u5177" class="headerlink" title="开发工具"></a>开发工具</h2><p>Mono + Xcode，Mono用来调用厂家提供的sdk，本来准备重写通信协议，但厂家给的sdk本身就是平台无关，所以直接拿来用了。Xcode用来编写上位机App。<br><img src="http://7xpkfb.com1.z0.glb.clouddn.com/Simulator%20Screen%20Shot%202017%E5%B9%B41%E6%9C%8816%E6%97%A5%2020.52.30.png" alt="上位机界面"></p>
 
       
     </div>
